@@ -5,7 +5,7 @@ import subprocess
 from time import *
 pages = ["StartPage", "PageOne", "MapEditor"]
 externalPrograms = [["python3", "exempleCode.py"], ["gcc", "exempleCfile.c", "-o", "firstprogram", "-lX11"]]
-externalProgramsCompiled = ["", "firstprogram"]
+externalProgramsCompiled = ["", "./firstprogram"]
 
 class SampleApp(tk.Tk):
 
@@ -95,11 +95,13 @@ class MapEditor(Frame):
         
 
     def mapEditorWindow(self):
-        def updater():
+        def updater(event):
             file = open("mapConfig.txt", "w")
             BrushSize = BrushSizeScale.get()
             file.write(str(BrushSize))
             file.close()
+        def closeMap():
+            mapWindow.quit()
         
         mapWindow = Toplevel(self)
         mapWindow.wm_title("map options")
@@ -109,11 +111,11 @@ class MapEditor(Frame):
         BrushSizeScale = Scale(mapWindow, from_=1, to=10, orient=HORIZONTAL,
                                command=updater)
         BrushSizeScale.grid(row=0, column=1, rowspan=2)
-        button3 = Button(mapWindow, text="save",
-                           command=updater)
+        button3 = Button(mapWindow, text="close",
+                           command=closeMap)
         button3.grid(row=2, columnspan=2)
         subprocess.Popen(externalPrograms[1])
-        sleep(100)
+        sleep(1)
         subprocess.Popen(externalProgramsCompiled[1])
 
 def programOne():
