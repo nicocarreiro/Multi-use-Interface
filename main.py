@@ -2,10 +2,14 @@ import tkinter as tk
 from tkinter import font as tkfont
 from tkinter import *
 import subprocess
-from time import *
+from os import *
+from multiprocessing import shared_memory
+import numpy as np
+
 pages = ["StartPage", "PageOne", "MapEditor"]
-externalPrograms = [["python3", "exempleCode.py"], ["gcc", "exempleCfile.c", "-o", "firstprogram", "-lX11"]]
-externalProgramsCompiled = ["", "./firstprogram"]
+externalPrograms = ["", "", "gcc desenha.c -o desenha $(sdl2-config --cflags --libs) -lSDL2 -lm -lrt"]
+externalProgramsCompiled = ["./braco", "", "./desenha cenario.bin"]
+mapeditor = []
 
 class SampleApp(tk.Tk):
 
@@ -50,7 +54,7 @@ class StartPage(Frame):
         self.controller = controller
         label = Label(self, text="multi usage interface", font=controller.title_font)
         label.pack(side="top", fill="x", pady=10)
-        button1 = Button(self, text="page one", height=2, width=11,
+        button1 = Button(self, text="braço", height=2, width=11,
                            command=lambda: controller.show_frame(pages[1]))
         button2 = Button(self, text="map settings", height=2, width=11,
                             command=lambda: controller.show_frame(pages[2]))
@@ -64,13 +68,11 @@ class StartPage(Frame):
 class PageOne(Frame):
 
     def __init__(self, parent, controller):
-        #libname = pathlib.Path().absolute() / "libtest.cpp"
-        #c_lib = ctypes.CDLL(libname)
         Frame.__init__(self, parent)
         self.controller = controller
         label = Label(self, text="braço mecanico", font=controller.title_font)
         label.pack(side="top", fill="x", pady=10)
-        runbraco = Button(self, text="run the first program",
+        runbraco = Button(self, text="rodar braco",
                            command=programOne)
         runbraco.pack()
         back = Button(self, text="Go to the start page",
@@ -96,13 +98,19 @@ class MapEditor(Frame):
 
     def mapEditorWindow(self):
         def updater(event):
-            file = open("mapConfig.txt", "w")
             BrushSize = BrushSizeScale.get()
-            file.write(str(BrushSize))
-            file.close()
+            array[0] = BrushSize
         def closeMap():
-            mapWindow.quit()
-        
+            shm.close()
+            shm.unlink()
+            mapWindow.destroy()
+            program.terminate()
+
+        size = np.int64().nbytes
+        shm = shared_memory.SharedMemory(name="posix_shm", create=True, size=size)
+        array = np.ndarray((1,), dtype=np.int64, buffer=shm.buf)
+        array[0] = 1
+
         mapWindow = Toplevel(self)
         mapWindow.wm_title("map options")
 
@@ -114,13 +122,16 @@ class MapEditor(Frame):
         button3 = Button(mapWindow, text="close",
                            command=closeMap)
         button3.grid(row=2, columnspan=2)
-        subprocess.Popen(externalPrograms[1])
-        sleep(1)
-        subprocess.Popen(externalProgramsCompiled[1])
+
+
+        if not path.isfile(externalProgramsCompiled[2].split()[0][2:]):
+            system(externalPrograms[2])
+        program = subprocess.Popen(externalProgramsCompiled[2].split())
+        
 
 def programOne():
-    subprocess.Popen(externalPrograms[0])
-    subprocess.Popen(externalProgramsCompiled[0])
+    #subprocess.Popen(externalPrograms[0].split())
+    subprocess.Popen(externalProgramsCompiled[0].split())
 
 
 def end():
