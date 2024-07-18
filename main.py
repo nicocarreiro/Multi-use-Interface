@@ -2,11 +2,99 @@ import tkinter as tk
 from tkinter import font as tkfont
 from tkinter import *
 import subprocess
-from os import *
+import os
 from multiprocessing import shared_memory
 import numpy as np
 import shutil
+import json
 
+# Dados iniciais
+data = {
+    "randomSeed": 11847429,
+    "environment": {
+        "placePheromoneRate": 1,
+        "pheromoneEvaporationRate": 15
+    },
+    "anthills": [
+        {
+            "id": 0,
+            "posX": 0.0,
+            "posY": 0.006,
+            "size": 0.006,
+            "antEspecifications": [0],
+            "antAmounts": [1000],
+            "foodDelivered": 0
+        },
+        {
+            "id": 1,
+            "posX": 0.0,
+            "posY": 0.0,
+            "size": 0.006,
+            "antEspecifications": [],
+            "antAmounts": [],
+            "foodDelivered": 0
+        }
+    ],
+    "foodSources": [
+        {
+            "id": 0,
+            "posX": -0.060,
+            "posY": 0.0,
+            "size": 0.006,
+            "foodAmount": 10000
+        },
+        {
+            "id": 1,
+            "posX": 0.060,
+            "posY": 0.0,
+            "size": 0.006,
+            "foodAmount": 10000
+        },
+        {
+            "id": 2,
+            "posX": 0.0,
+            "posY": -0.06,
+            "size": 0.006,
+            "foodAmount": 10000
+        },
+        {
+            "id": 3,
+            "posX": 0.0,
+            "posY": 0.06,
+            "size": 0.006,
+            "foodAmount": 10000
+        }
+    ],
+    "ants": [
+        {
+            "antEspecification": 0,
+            "nestID": 0,
+            "size": 0.002,
+            "velocity": 0.0004,
+            "state": 0,
+            "pheromoneType": 0,
+            "placePheromoneIntensity": 60,
+            "lifeTime": 1250,
+            "viewFrequency": 1,
+            "antSensorParameters": [
+                {
+                    "xCenterAntDistance": 0.004,
+                    "yCenterAntDistance": 0.004,
+                    "positionAngle": -45,
+                    "sensorPixelRadius": 2,
+                    "sensorType": 0
+                },
+                {
+                    "xCenterAntDistance": 0.004,
+                    "yCenterAntDistance": 0.004,
+                    "positionAngle": 45,
+                    "sensorPixelRadius": 2,
+                    "sensorType": 0
+                }
+            ]
+        }
+    ]
+}
 
 pages = ["StartPage", "PageOne", "MapEditor"]
 externalPrograms = ["", "", "gcc desenha.c -o desenha $(sdl2-config --cflags --libs) -lSDL2 -lm -lrt"]
@@ -47,6 +135,8 @@ class SampleApp(tk.Tk):
     def show_frame(self, page_name):
         '''Show a frame for the given page name'''
         frame = self.frames[page_name]
+        if page_name == "PageOne":
+            self.frames[page_name].updmaps()
         frame.tkraise()
 
 
@@ -73,23 +163,47 @@ class StartPage(Frame):
 class PageOne(Frame):
 
     def __init__(self, parent, controller):
+        def updateAnthill():
+            search = int(anthillid[0].get())
+            for anthill in data["anthills"]:
+                if anthill["id"] == search:
+                    anthill["antAmounts"].append(int(anthillamount[0].get()))
         Frame.__init__(self, parent)
         self.controller = controller
         label = Label(self, text="braço mecanico", font=controller.title_font)
         label.pack(side="top", fill="x", pady=10)
         space = Label(self, text="", height=7)
         space.pack()
-        clicked = StringVar()
-        savedmaps = listdir("saves")
-        clicked.set(savedmaps[0]) 
-        maps = OptionMenu(self, clicked, *savedmaps)
-        maps.pack()
+        savedmaps = os.listdir("saves")
+        self.clicked = StringVar(value=savedmaps[0])
+        self.maps = OptionMenu(self, self.clicked, *savedmaps)
+        self.maps.pack()
+
+        anthillframe = Frame(self)
+        anthillframe.pack()
+        anthillid = Entry(anthillframe), Label(anthillframe, text="anthillid")
+        anthillid[1].pack(side=LEFT)
+        anthillid[0].pack(side=RIGHT)
+
+        anthillframe = Frame(self)
+        anthillframe.pack()
+        anthillamount = Entry(anthillframe), Label(anthillframe, text="anthillamount")
+        anthillamount[1].pack(side=LEFT)
+        anthillamount[0].pack(side=RIGHT)
+
+        addAnthill = Button(self, text="add anthill", command=updateAnthill)
+        addAnthill.pack()
         runbraco = Button(self, text="rodar braco", height=4, width=50,
-                           command=lambda: programOne("saves/" + clicked.get()))
+                           command=lambda: programOne("saves/" + self.clicked.get()))
         runbraco.pack()
         back = Button(self, text="Go to the start page", height=4, width=50,
                            command=lambda: controller.show_frame(pages[0]))
         back.pack()
+    def updmaps(self):
+            menu = self.maps['menu']
+            menu.delete(0, 'end')  # Clear existing options
+            for option in os.listdir("saves"):
+                menu.add_command(label=option, command=lambda value=option: self.clicked.set(value))
 
 
 
@@ -136,16 +250,18 @@ class MapEditor(Frame):
         button3.grid(row=2, columnspan=2)
 
 
-        if not path.isfile(externalProgramsCompiled[2].split()[0][2:]):
-            system(externalPrograms[2])
-        program = subprocess.Popen((externalProgramsCompiled[2] + " saves/cenario" + str(len(listdir("saves"))) + ".bin").split())
+        if not os.path.isfile(externalProgramsCompiled[2].split()[0][2:]):
+            os.system(externalPrograms[2])
+        program = subprocess.Popen((externalProgramsCompiled[2] + " saves/cenario" + str(len(os.listdir("saves"))) + ".bin").split())
         
 
 def programOne(name):
+    with open("dados.json", "w") as arquivo:
+        json.dump(data, arquivo, indent=4)
     #subprocess.Popen(externalPrograms[0].split())
     shutil.copy(name, "cenario.bin")
     subprocess.Popen(externalProgramsCompiled[0].split())
-
+    
 
 def end():
     app.quit()
