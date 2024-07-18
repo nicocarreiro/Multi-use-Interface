@@ -156,7 +156,8 @@ void lerOrigemDestino(int grid[NUM_SQUARES][NUM_SQUARES], Tela* tela) {
                 SDL_GetMouseState(&mouse_x, &mouse_y);
                 for (int i = (-1 * (*shm)) + 1; abs(i) < *shm; i++){
                     for (int j = (-1 * (*shm)) + 1; abs(j) < *shm; j++){
-                        grid[XYparaIJ(mouse_y)+i][XYparaIJ(mouse_x)+j] = 1;
+                        if ((XYparaIJ(mouse_y)+i) >= 0 && (XYparaIJ(mouse_y)+i) < NUM_SQUARES && (XYparaIJ(mouse_x)+j) >= 0 && (XYparaIJ(mouse_x)+j) < NUM_SQUARES)                        
+                            grid[XYparaIJ(mouse_y)+i][XYparaIJ(mouse_x)+j] = 1;
                     }
                 }
                 arrumaTela(tela);

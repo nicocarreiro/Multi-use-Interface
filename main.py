@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import font as tkfont
 from tkinter import *
 import subprocess
-from os import *
+import os
 from multiprocessing import shared_memory
 import numpy as np
 import shutil
@@ -47,6 +47,8 @@ class SampleApp(tk.Tk):
     def show_frame(self, page_name):
         '''Show a frame for the given page name'''
         frame = self.frames[page_name]
+        if page_name == "PageOne":
+            self.frames[page_name].updmaps()
         frame.tkraise()
 
 
@@ -79,17 +81,22 @@ class PageOne(Frame):
         label.pack(side="top", fill="x", pady=10)
         space = Label(self, text="", height=7)
         space.pack()
-        clicked = StringVar()
-        savedmaps = listdir("saves")
-        clicked.set(savedmaps[0]) 
-        maps = OptionMenu(self, clicked, *savedmaps)
-        maps.pack()
+        self.clicked = StringVar()
+        savedmaps = os.listdir("saves")
+        self.clicked.set(savedmaps[0]) 
+        self.maps = OptionMenu(self, self.clicked, *savedmaps)
+        self.maps.pack()
         runbraco = Button(self, text="rodar braco", height=4, width=50,
-                           command=lambda: programOne("saves/" + clicked.get()))
+                           command=lambda: programOne("saves/" + self.clicked.get()))
         runbraco.pack()
         back = Button(self, text="Go to the start page", height=4, width=50,
                            command=lambda: controller.show_frame(pages[0]))
         back.pack()
+    def updmaps(self):
+        menu = self.maps['menu']
+        menu.delete(0, 'end')  # Clear existing options
+        for option in os.listdir("saves"):
+            menu.add_command(label=option, command=lambda value=option: self.clicked.set(value))
 
 
 
@@ -136,9 +143,9 @@ class MapEditor(Frame):
         button3.grid(row=2, columnspan=2)
 
 
-        if not path.isfile(externalProgramsCompiled[2].split()[0][2:]):
-            system(externalPrograms[2])
-        program = subprocess.Popen((externalProgramsCompiled[2] + " saves/cenario" + str(len(listdir("saves"))) + ".bin").split())
+        if not os.path.isfile(externalProgramsCompiled[2].split()[0][2:]):
+            os.system(externalPrograms[2])
+        program = subprocess.Popen((externalProgramsCompiled[2] + " saves/cenario" + str(len(os.listdir("saves"))) + ".bin").split())
         
 
 def programOne(name):
