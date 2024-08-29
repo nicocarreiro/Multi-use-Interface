@@ -251,7 +251,7 @@ class MapEditor(Frame):
         button3.grid(row=2, columnspan=2)
 
 
-        if not os.path.isfile(externalProgramsCompiledChecker):
+        if not os.path.isfile(externalProgramsCompiledChecker[2]):
             os.system(externalPrograms[2])
         program = subprocess.Popen((externalProgramsCompiled[2] + " saves/cenario" + str(len(os.listdir("saves"))) + ".bin").split())
         
