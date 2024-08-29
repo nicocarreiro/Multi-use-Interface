@@ -97,8 +97,9 @@ data = {
 }
 
 pages = ["StartPage", "PageOne", "MapEditor"]
-externalPrograms = ["", "", "gcc desenha.c -o desenha $(sdl2-config --cflags --libs) -lSDL2 -lm -lrt"]
-externalProgramsCompiled = ["./braco", "", "./desenha"]
+externalPrograms = ["COMPILE MESSAGE", "", "gcc desenha.c -o desenha $(sdl2-config --cflags --libs) -lSDL2 -lm -lrt"]
+externalProgramsCompiledChecker = ["COMPILED PROGRAM NAME", "", "desenha"]
+externalProgramsCompiled = ["RUN MESSAGE", "", "./desenha"]
 mapeditor = []
 
 class SampleApp(tk.Tk):
@@ -145,11 +146,11 @@ class StartPage(Frame):
     def __init__(self, parent, controller):
         Frame.__init__(self, parent)
         self.controller = controller
-        label = Label(self, text="multi usage interface", font=controller.title_font)
+        label = Label(self, text="Hardware Accelerated Ant Colony", font=controller.title_font)
         label.pack(side="top", fill="x", pady=10)
         space = Label(self, text="", height=10)
         space.pack()
-        button1 = Button(self, text="braço", height=5, width=50,
+        button1 = Button(self, text="Ant Colony Options", height=5, width=50,
                            command=lambda: controller.show_frame(pages[1]))
         button2 = Button(self, text="map settings", height=5, width=50,
                             command=lambda: controller.show_frame(pages[2]))
@@ -170,7 +171,7 @@ class PageOne(Frame):
                     anthill["antAmounts"].append(int(anthillamount[0].get()))
         Frame.__init__(self, parent)
         self.controller = controller
-        label = Label(self, text="braço mecanico", font=controller.title_font)
+        label = Label(self, text="Hardware Accelerated Ant Colony", font=controller.title_font)
         label.pack(side="top", fill="x", pady=10)
         space = Label(self, text="", height=7)
         space.pack()
@@ -193,7 +194,7 @@ class PageOne(Frame):
 
         addAnthill = Button(self, text="add anthill", command=updateAnthill)
         addAnthill.pack()
-        runbraco = Button(self, text="rodar braco", height=4, width=50,
+        runbraco = Button(self, text="run ant colony", height=4, width=50,
                            command=lambda: programOne("saves/" + self.clicked.get()))
         runbraco.pack()
         back = Button(self, text="Go to the start page", height=4, width=50,
@@ -250,7 +251,7 @@ class MapEditor(Frame):
         button3.grid(row=2, columnspan=2)
 
 
-        if not os.path.isfile(externalProgramsCompiled[2].split()[0][2:]):
+        if not os.path.isfile(externalProgramsCompiledChecker):
             os.system(externalPrograms[2])
         program = subprocess.Popen((externalProgramsCompiled[2] + " saves/cenario" + str(len(os.listdir("saves"))) + ".bin").split())
         
