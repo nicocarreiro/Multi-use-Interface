@@ -79,24 +79,123 @@ class PageOne(Frame):
         self.controller = controller
         label = Label(self, text="braço mecanico", font=controller.title_font)
         label.pack(side="top", fill="x", pady=10)
-        space = Label(self, text="", height=7)
+        space = Label(self, text="", height=3)
         space.pack()
+
+
         self.clicked = StringVar()
-        savedmaps = os.listdir("saves")
-        self.clicked.set(savedmaps[0]) 
+        savedmaps = os.listdir("saves/cenarios")
+        self.clicked.set("") 
         self.maps = OptionMenu(self, self.clicked, *savedmaps)
         self.maps.pack()
-        runbraco = Button(self, text="rodar braco", height=4, width=50,
-                           command=lambda: programOne("saves/" + self.clicked.get()))
+
+        self.clickedScene = StringVar()
+        savedScenes = os.listdir("saves/config")
+        savedScenes.append("")
+        self.clickedScene.set("") 
+        self.scenes = OptionMenu(self, self.clickedScene, *savedScenes)
+        self.scenes.pack()
+
+
+        configbraco = Button(self, text="rodar braco", height=4, width=50,
+                           command=lambda: programOne("saves/cenarios/" + self.clicked.get(), "saves/config/" + self.clickedScene.get()))
+        configbraco.pack()
+        runbraco = Button(self, text="Config Menu", height=4, width=50,
+                           command=self.configMenu)
         runbraco.pack()
         back = Button(self, text="Go to the start page", height=4, width=50,
                            command=lambda: controller.show_frame(pages[0]))
         back.pack()
+
+
     def updmaps(self):
         menu = self.maps['menu']
         menu.delete(0, 'end')  # Clear existing options
-        for option in os.listdir("saves"):
+        for option in os.listdir("saves/cenarios"):
             menu.add_command(label=option, command=lambda value=option: self.clicked.set(value))
+        
+        menu = self.scenes['menu']
+        menu.delete(0, 'end')  # Clear existing options
+        for option in os.listdir("saves/config"):
+            menu.add_command(label=option, command=lambda value=option: self.clickedScene.set(value))
+
+
+    def configMenu(self):
+        def configSave():
+            temp = 0
+            for _ in os.listdir("saves/config"):
+                temp+=1
+            name = "config" + str(temp)
+            if (fileName.get().replace(" ", "") and (fileName.get() != "config")):
+                name = fileName.get()
+                temp = 0
+
+                while os.path.isfile(name + ".bin"):
+                    temp+=1
+                if temp:
+                    name+=str(temp)
+
+            name="saves/config/" + name + ".bin"
+
+            with open(name, "wb") as arquivo:
+                njuntas_value = int(textNjuntas.get()) if textNjuntas.get() else 1
+                tam_value = int(Tam.get()) if Tam.get() else 1
+                pop_value = int(pop.get()) if pop.get() else 1
+
+                arquivo.write(njuntas_value.to_bytes(4, byteorder='little'))
+                arquivo.write(tam_value.to_bytes(4, byteorder='little'))
+                arquivo.write(pop_value.to_bytes(4, byteorder='little'))
+
+
+
+        def validate_int(P):
+            if (P.isdigit() or P == "") and P != "0":
+                return True
+            else:
+                return False
+
+        vcmd = (self.register(validate_int), '%P')
+
+
+
+        configWindow = Toplevel(self)
+        configWindow.wm_title("config")
+
+        textFileName = Label(configWindow, text="File Name").grid(row=0)
+        fileName = Entry(configWindow)
+        fileName.insert(0,"config")
+        fileName.grid(row=0, column=1)
+        
+
+        empty = Label(configWindow, text="")
+        empty.grid(row=1)
+
+        textNjuntas = Label(configWindow, text="Number of Joints").grid(row=2)
+        textNjuntas = Entry(configWindow, validate="key", validatecommand=vcmd)
+        textNjuntas.insert(0,"30")
+        textNjuntas.grid(row=2, column=1)
+
+
+        textTam = Label(configWindow, text="Arm length").grid(row=3)
+        Tam = Entry(configWindow, validate="key", validatecommand=vcmd)
+        Tam.insert(0,"700")
+        Tam.grid(row=3, column=1)
+
+
+        textPop = Label(configWindow, text="Population size").grid(row=4)
+        pop = Entry(configWindow, validate="key", validatecommand=vcmd)
+        pop.insert(0,"100")
+        pop.grid(row=4, column=1)
+        
+
+        #textNmutacao = Label(configWindow, text="Starting Mutation").grid(row=5)
+        #Nmutacao = Entry(configWindow).grid(row=5, column=1)
+
+        empty2 = Label(configWindow, text="")
+        empty2.grid(row=6)
+
+        save = Button(configWindow, text="     Save     ", command=configSave).grid(row=7, columnspan=2)
+
 
 
 
@@ -145,13 +244,16 @@ class MapEditor(Frame):
 
         if not os.path.isfile(externalProgramsCompiled[2].split()[0][2:]):
             os.system(externalPrograms[2])
-        program = subprocess.Popen((externalProgramsCompiled[2] + " saves/cenario" + str(len(os.listdir("saves"))) + ".bin").split())
+        program = subprocess.Popen((externalProgramsCompiled[2] + " saves/cenarios/cenario" + str(len(os.listdir("saves/cenarios"))) + ".bin").split())
         
 
-def programOne(name):
-    #subprocess.Popen(externalPrograms[0].split())
-    shutil.copy(name, "cenario.bin")
-    subprocess.Popen(externalProgramsCompiled[0].split())
+def programOne(name, config):
+    os.system("./a_star " + name)
+    with open(config, "rb") as arquivo:
+        data = arquivo.read(12)
+    x, y, z = (int.from_bytes(data[0:4], byteorder="little")), (int.from_bytes(data[4:8], byteorder="little")), (int.from_bytes(data[8:12], byteorder="little"))
+
+    os.system("./braco " + name + " " + name[:-4] + "_caminho.bin " + "{} {} {}".format(x,y,z))
 
 
 def end():
