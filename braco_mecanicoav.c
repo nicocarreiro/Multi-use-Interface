@@ -312,7 +312,7 @@ int main(int argc, char* argv[]) {
     //entender melhor essa parte para comentar, nao me lembro de quando fiz ela
     //ela pega todos os osbtaculos e vai criando uma area ao redor deles, para entender a distancia aos obstaculos, por isso os niveis
     int nivel = 1;
-    while(temVazio(obstaculos)) {
+    while(nivel <= 3) {
         for(int i = 0; i < NUM_SQUARES; i++) {
             for(int j = 0; j < NUM_SQUARES; j++) {
                 if(obstaculos[i][j] == nivel) {

@@ -11,7 +11,7 @@ int origemX, destinoX, origemY, destinoY;
 
 #define SCREEN_LENGTH 640
 #define NUM_SQUARES 80
-#define MOSTRA_PROCESSO 0
+#define MOSTRA_PROCESSO 1
 #define SQUARE_SIZE (SCREEN_LENGTH/NUM_SQUARES)
 #define MAX_VALUE (99999999999)
 #define PESO_OBSTACULO -500
@@ -308,12 +308,6 @@ int main(int argc, char* argv[]) {
     arrumaGrid(grid, &tela);
     arrumaCaminho(resposta, &tela);
     mostraTela(&tela);
-    while(1)
-    while (SDL_PollEvent(&event))
-        {
-            switch (event.type)
-                {
-                    case SDL_QUIT:
                         //ve quantos obstaculos haviam
                         printf("");
                         char novoVetor[1000];
@@ -347,6 +341,6 @@ int main(int argc, char* argv[]) {
                             for(int j = 0; j < NUM_SQUARES; j++) 
                                 item_apagar(&(grid[i][j]));
                         exit(0);
-                }
-        }
+                
+        
 }
