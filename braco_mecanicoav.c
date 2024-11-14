@@ -29,7 +29,7 @@ int NUM_JUNTAS = 30;
 #define GERACOES_REPETIDAS 200 //Quantas gerações com o melhor repetido para que a mutação varie 
 #define TAXA_MUTACAO 1  //Taxa de mutação inicial, durante a execução será na prática alterada pelo usuário
 #define DISTANCIA_MIN 5
-#define GERACOES_POR_OBJETIVO 500
+#define GERACOES_POR_OBJETIVO 200
 
 typedef struct {
 	SDL_Renderer *renderer;
@@ -113,7 +113,8 @@ void avaliaIndividuo(Individuo* individuo, int** obstaculos, SDL_Point objetivo)
                 individuo->menorDistancia = 0;
                 return;
             } else {
-                if(obstaculos[XYparaIJ(y_atual)][XYparaIJ(x_atual)] > menor_distancia) menor_distancia = obstaculos[XYparaIJ(y_atual)][XYparaIJ(x_atual)];
+                if(obstaculos[XYparaIJ(y_atual)][XYparaIJ(x_atual)] > menor_distancia) {
+                    menor_distancia = obstaculos[XYparaIJ(y_atual)][XYparaIJ(x_atual)];}
             }
         } else {
             individuo->distanciaDestino = 99999999; 
@@ -177,6 +178,7 @@ int lerInput(int* mutacao, SDL_Point* objetivo, int* mostra_pop)
                 else if (keyPressed == SDLK_g) return 2;
                 else if (keyPressed == SDLK_s) *mostra_pop = !(*mostra_pop);
                 else if (keyPressed == SDLK_p) pause = !pause;
+                else if (keyPressed == SDLK_r) return 3;
                 break;
             }
             case SDL_MOUSEBUTTONDOWN:
@@ -312,7 +314,7 @@ int main(int argc, char* argv[]) {
     //entender melhor essa parte para comentar, nao me lembro de quando fiz ela
     //ela pega todos os osbtaculos e vai criando uma area ao redor deles, para entender a distancia aos obstaculos, por isso os niveis
     int nivel = 1;
-    while(nivel <= 3) {
+    while(nivel <= 2) {
         for(int i = 0; i < NUM_SQUARES; i++) {
             for(int j = 0; j < NUM_SQUARES; j++) {
                 if(obstaculos[i][j] == nivel) {
@@ -368,12 +370,16 @@ int main(int argc, char* argv[]) {
             }
         int input = lerInput(&taxa_mut, &destino, &mostra_pop);
         if(input == 1) {avaliaIndividuo(melhorHistorico, obstaculos, destino);}
-        else if(input == 2) {
+        else if(input == 2 || input == 3) {
             for(int i = 0; i < NUM_INDIVIDUOS; i++) {
                 populacao[i] = individuoAleatorio(inicio, NUM_JUNTAS);
             }
             copiaIndividuo(melhorHistorico, populacao[0]);
-        }
+            if (input == 3) {
+                geracao = 0;
+                geracoesRepetidas = 0;
+            }
+        } 
 
         //limpa a tela
         arrumaTela(&tela);

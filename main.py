@@ -5,7 +5,6 @@ import subprocess
 import os
 from multiprocessing import shared_memory
 import numpy as np
-import shutil
 
 
 pages = ["StartPage", "PageOne", "MapEditor"]
@@ -32,14 +31,14 @@ class SampleApp(tk.Tk):
 
         self.frames = {}
         for page_name in pages:
-            # Get the class object from the string name
+            # cria um frame para cada pagina, de uma lita de strings
             page_class = globals()[page_name]
             frame = page_class(parent=container, controller=self)
             self.frames[page_name] = frame
 
-            # put all of the pages in the same location;
-            # the one on the top of the stacking order
-            # will be the one that is visible.
+            # coloca todos os frames no mesmo lugar
+            # a pilha de frames é organizada de acordo com a ordem de inserção
+            # mostrando o frame mais recente
             frame.grid(row=0, column=0, sticky="nsew")
 
 
@@ -78,28 +77,28 @@ class PageOne(Frame):
     def __init__(self, parent, controller):
         Frame.__init__(self, parent)
         self.controller = controller
+
+        Label(self, text="", height=4).pack()
+        
         label = Label(self, text="Simulação de manipulador", font=controller.title_font)
         label.pack(side="top", fill="x", pady=10)
-        space = Label(self, text="", height=3)
-        space.pack()
+        Label(self, text="", height=3).pack()
 
+        temp = [""]
 
         self.clicked = StringVar()
-        savedmaps = os.listdir("saves/cenarios")
-        self.clicked.set("") 
-        self.maps = OptionMenu(self, self.clicked, *savedmaps)
+        self.maps = OptionMenu(self, self.clicked, *temp)
         self.maps.pack()
 
-        self.clickedScene = StringVar()
-        savedScenes = os.listdir("saves/config")
-        savedScenes.append("")
-        self.clickedScene.set("") 
-        self.scenes = OptionMenu(self, self.clickedScene, *savedScenes)
+        self.clickedConfig = StringVar()
+        self.clickedConfig.set("") 
+        self.scenes = OptionMenu(self, self.clickedConfig, *temp)
         self.scenes.pack()
 
+        Label(self, text="", height=1).pack()
 
         configbraco = Button(self, text="Rodar simulação", height=4, width=50,
-                           command=lambda: programOne("saves/cenarios/" + self.clicked.get(), "saves/config/" + self.clickedScene.get()))
+                           command=lambda: programOne("saves/cenarios/" + self.clicked.get(), "saves/config/" + self.clickedConfig.get()))
         configbraco.pack()
         runbraco = Button(self, text="Menu de configuração", height=4, width=50,
                            command=self.configMenu)
@@ -119,23 +118,22 @@ class PageOne(Frame):
         menu = self.scenes['menu']
         menu.delete(0, 'end')  # Clear existing options
         for option in os.listdir("saves/config"):
-            menu.add_command(label=option, command=lambda value=option: self.clickedScene.set(value))
+            menu.add_command(label=option, command=lambda value=option: self.clickedConfig.set(value))
 
 
     def configMenu(self):
         def configSave():
-            temp = 0
-            for _ in os.listdir("saves/config"):
-                temp+=1
-            name = "config" + str(temp)
+            savedConfigs = os.listdir("saves/config")
             if (fileName.get().replace(" ", "") and (fileName.get() != "config")):
                 name = fileName.get()
-                temp = 0
-
-                while os.path.isfile(name + ".bin"):
-                    temp+=1
-                if temp:
-                    name+=str(temp)
+            else:
+                name = "config"
+            temp = 1
+            if (name + ".bin" in savedConfigs):
+                for _ in range(len(savedConfigs)):
+                    if ((name + str(temp) + ".bin") in savedConfigs):
+                        temp+=1
+                name += "(" + str(temp) + ")"
 
             name="saves/config/" + name + ".bin"
 
@@ -165,7 +163,7 @@ class PageOne(Frame):
         configWindow = Toplevel(self)
         configWindow.wm_title("config")
 
-        textFileName = Label(configWindow, text="File Name").grid(row=0)
+        textFileName = Label(configWindow, text="Nome do arquivo").grid(row=0)
         fileName = Entry(configWindow)
         fileName.insert(0,"config")
         fileName.grid(row=0, column=1)
@@ -208,11 +206,15 @@ class MapEditor(Frame):
     def __init__(self, parent, controller):
         Frame.__init__(self, parent)
         self.controller = controller
+        Label(self, text="", height=4).pack()
         label = Label(self, text="Configurações de mapa", font=controller.title_font)
         label.pack(side="top", fill="x", pady=10)
-        button = Button(self, text="Editor de mapa",
+
+        Label(self, text="", height=5).pack()
+
+        button = Button(self, text="Editor de mapa", height=3, width=40,
                            command=self.mapEditorWindow)
-        button2 = Button(self, text="Voltar a pagina inicial",
+        button2 = Button(self, text="Voltar a pagina inicial", height=3, width=40,
                            command=lambda: controller.show_frame(pages[0]))
         button.pack()
         button2.pack()
@@ -236,12 +238,12 @@ class MapEditor(Frame):
         mapWindow = Toplevel(self)
         mapWindow.wm_title("Configurações do mapa")
 
-        brushtxt = Label(mapWindow, width=15, text="Tamanho do pincel", anchor='w')
+        brushtxt = Label(mapWindow, width=20, text="Espessura do pincel", anchor='w')
         brushtxt.grid(row=0, column=0, rowspan=2)
-        BrushSizeScale = Scale(mapWindow, from_=1, to=10, orient=HORIZONTAL,
+        BrushSizeScale = Scale(mapWindow, from_=1, to=10, orient=HORIZONTAL, 
                                command=updater)
         BrushSizeScale.grid(row=0, column=1, rowspan=2)
-        button3 = Button(mapWindow, text="Fechar",
+        button3 = Button(mapWindow, text="Fechar e Salvar",
                            command=closeMap)
         button3.grid(row=2, columnspan=2)
 
@@ -257,7 +259,7 @@ def programOne(name, config):
         data = arquivo.read(12)
     x, y, z = (int.from_bytes(data[0:4], byteorder="little")), (int.from_bytes(data[4:8], byteorder="little")), (int.from_bytes(data[8:12], byteorder="little"))
 
-    os.system("./braco " + name + " " + name[:-4] + "_caminho.bin " + "{} {} {}".format(x,y,z))
+    subprocess.Popen(("./braco " + name + " " + name[:-4] + "_caminho.bin " + "{} {} {}".format(x,y,z)).split())
 
 
 def end():
